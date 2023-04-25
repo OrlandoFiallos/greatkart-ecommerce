@@ -56,17 +56,18 @@
                                 </div>
                             </div> <!-- row.// -->
                             <hr>
-                            {% if single_product.stock <= 0 %} <h5 class="text-danger">Out of stock</h5>
-                                {% else %}
-                    
-                                {% if in_cart %}
+                            {% if single_product.stock <= 0 %} 
+                                <h5 class="text-danger">Out of stock</h5>
+                            {% else %}
+                            <button type="submit" class="btn  btn-primary"> <span class="text">Add to cart</span> <i class="fas fa-shopping-cart"></i> 
+                            </button>
+                                <!-- {% if in_cart %}
                                 <a href="#" class="btn  btn-success"> <span class="text">Added to
-                                        cart</span> <i class="fas fa-check"></i> </a>
-                                {% else %}
-                                <button type="submit" class="btn  btn-primary"> <span class="text">Add to cart</span> <i class="fas fa-shopping-cart"></i> 
-                                </button>
-                                {% endif %}
-                                {% endif %}
+                                        cart</span> <i class="fas fa-check"></i> </a> -->
+                                <!-- {% else %} -->
+                                
+                                <!-- {% endif %} -->
+                            {% endif %}
                         </article> <!-- product-info-aside .// -->
                     </form>
                 </main> <!-- col.// -->
