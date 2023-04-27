@@ -3,8 +3,20 @@ from .forms import RegistrationForm
 from .models import User
 from django.contrib import messages, auth
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse 
+
+#Verification email
+from django.contrib.sites.shortcuts import get_current_site
+from django.template.loader import render_to_string
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import EmailMessage
 
 def register(request):
+    if request.user.is_authenticated:
+        return redirect('home') 
+    
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
         if form.is_valid():
@@ -16,9 +28,23 @@ def register(request):
             username = email.split("@")[0]
             user = User.objects.create(first_name=first_name, last_name=last_name, email=email, username=username, password=password)
             user.phone = phone
+            user.set_password(password)
             user.save() 
-            messages.success(request, 'Registration successfull')
-            return redirect('register')
+            
+            #User activation
+            current_site = get_current_site(request)
+            mail_subject = 'Please activate your account'
+            message = render_to_string('users/account_verification_email.html',{
+                'user':  user,
+                'domain': current_site,
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                'token':default_token_generator.make_token(user),
+            })
+            to_email = email
+            send_email = EmailMessage(mail_subject, message, to=[to_email])
+            send_email.send()
+            # messages.success(request, 'Thank you for registring with us. We have sent you a verification email to your email address. Please verify it.')
+            return redirect('/users/login/?command=verification&email='+email)
     else:
         form = RegistrationForm()
             
@@ -29,14 +55,17 @@ def register(request):
 
 def login(request):
     if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
+        email = request.POST['email']
+        password = request.POST['password']
         
-        user = auth.authenticate(email=email, password=password)
+        user = auth.authenticate(request, username=email, password=password)
+        print(email, password)
+        print(user)
         
         if user is not None:
             auth.login(request, user)
-            return redirect('home')
+            messages.success(request, 'You are now logged in')
+            return redirect('dashboard')
         else:
             messages.error(request,'Invalid credentials'), 
             return redirect('login')
@@ -48,3 +77,23 @@ def logout(request):
     auth.logout(request)
     messages.success(request,'You are logged out')
     return redirect('login') 
+
+def activate(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = User._default_manager.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+    
+    if user is not None and default_token_generator.check_token(user, token):
+        user.is_active = True
+        user.save()
+        messages.success(request, 'Congratulations!, Your account is activated.')
+        return redirect('login')
+    else:
+        messages.error(request, 'Invalid activation link')
+    return redirect('register')
+
+@login_required(login_url='login')
+def dashboard(request):
+    return render(request, 'users/dashboard.html')
