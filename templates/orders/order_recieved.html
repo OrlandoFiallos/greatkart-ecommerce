@@ -1,0 +1,10 @@
+{% autoescape off %}
+Hi {{ user.first_name }}
+
+THANKS FOR SHOPPING WITH US
+YOUR ORDER HAS BEEN RECIEVED
+
+
+Order number: {{ order.order_number }}
+Your total:$ {{ order.order_total }}
+{% endautoescape %}
