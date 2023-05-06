@@ -7,6 +7,7 @@ from django.db.models import Q
 from .forms import ReviewForm
 from django.contrib import messages
 from django.http import HttpResponse
+from orders.models import OrderProduct
 #Paginator
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 
@@ -39,9 +40,21 @@ def product_detail(request, category_slug, product_slug):
         in_cart = CartItem.objects.filter(cart__cart_id=_cart_id(request),product=single_product)
         
     except Exception as e:
-        raise e 
+        raise e
     
-    context = {'single_product':single_product,'in_cart':in_cart}
+    try:
+        order_product = OrderProduct.objects.filter(user=request.user, product_id = single_product.id).exists()
+    except OrderProduct.DoesNotExist:
+        order_product = None
+    
+    reviews = ReviewRating.objects.filter(product=single_product, status=True)
+    
+    context = {
+        'single_product':single_product,
+        'in_cart':in_cart,
+        'order_product': order_product,
+        'reviews':reviews,
+        }
     return render(request,'store/product_detail.html', context=context)
 
 def search(request):
