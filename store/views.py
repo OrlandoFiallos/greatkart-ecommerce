@@ -35,23 +35,24 @@ def store(request,category_slug=None):
     return render(request,'store/store.html', context=context)
 
 def product_detail(request, category_slug, product_slug):
-    try:
-        single_product = Product.objects.get(category__slug=category_slug, slug=product_slug )
-        in_cart = CartItem.objects.filter(cart__cart_id=_cart_id(request),product=single_product)
-        
-    except Exception as e:
-        raise e
     
-    try:
-        order_product = OrderProduct.objects.filter(user=request.user, product_id = single_product.id).exists()
-    except OrderProduct.DoesNotExist:
-        order_product = None
-    
+    if request.user.is_authenticated is not True:
+        try:
+            single_product = Product.objects.get(category__slug=category_slug, slug=product_slug )
+            order_product = None
+        except:
+            pass
+    else:
+        try:
+            single_product = Product.objects.get(category__slug=category_slug, slug=product_slug )
+            order_product = OrderProduct.objects.filter(user=request.user, product_id = single_product.id).exists()
+        except OrderProduct.DoesNotExist:
+            order_product = None
+            
     reviews = ReviewRating.objects.filter(product=single_product, status=True)
     
     context = {
         'single_product':single_product,
-        'in_cart':in_cart,
         'order_product': order_product,
         'reviews':reviews,
         }

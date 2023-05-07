@@ -130,8 +130,12 @@ def cart(request, total=0, quantity=0, cart_items=None):
     if request.user.is_authenticated:
         cart_items = CartItem.objects.filter(user=request.user, is_active=True)
     else:
-        cart = Cart.objects.get(cart_id=_cart_id(request))
-        cart_items = CartItem.objects.filter(cart=cart, is_active=True)
+        try:
+            cart = Cart.objects.get(cart_id=_cart_id(request))
+            cart_items = CartItem.objects.filter(cart=cart, is_active=True)
+        except Cart.DoesNotExist:
+            cart = Cart.objects.create(cart_id=_cart_id(request))
+            cart_items = CartItem.objects.filter(cart=cart, is_active=True)
         
     for cart_item in cart_items:
         total += (cart_item.product.price * cart_item.quantity)
