@@ -36,15 +36,12 @@ def store(request,category_slug=None):
 
 def product_detail(request, category_slug, product_slug):
     
+    single_product = Product.objects.get(category__slug=category_slug, slug=product_slug )
+    
     if request.user.is_authenticated is not True:
-        try:
-            single_product = Product.objects.get(category__slug=category_slug, slug=product_slug )
-            order_product = None
-        except:
-            pass
+        order_product = None
     else:
         try:
-            single_product = Product.objects.get(category__slug=category_slug, slug=product_slug )
             order_product = OrderProduct.objects.filter(user=request.user, product_id = single_product.id).exists()
         except OrderProduct.DoesNotExist:
             order_product = None
